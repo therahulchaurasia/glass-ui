@@ -9,6 +9,10 @@ export interface ElasticDragOptions {
   overshoot?: number
   /** Spring settle duration in ms. Default 850 */
   duration?: number
+  /** Minimum pointer travel (px) before the elastic effect activates. Default 0 (immediate) */
+  threshold?: number
+  /** Whether to apply scale deformation while dragging. Default true */
+  squishOnDrag?: boolean
 }
 
 export function useElasticDrag({
@@ -16,6 +20,8 @@ export function useElasticDrag({
   squish = 0.18,
   overshoot = 0.35,
   duration = 850,
+  threshold = 0,
+  squishOnDrag = true,
 }: ElasticDragOptions = {}) {
   const ref = useRef<HTMLElement>(null)
   const animationRef = useRef<Animation | null>(null)
@@ -37,30 +43,50 @@ export function useElasticDrag({
     const startX = e.clientX
     const startY = e.clientY
 
+    let activated = threshold === 0
     let lastDx = 0
     let lastDy = 0
     let lastSx = 1
     let lastSy = 1
 
     const handlePointerMove = (e: PointerEvent) => {
-      lastDx = (e.clientX - startX) * resistance
-      lastDy = (e.clientY - startY) * resistance
+      const rawDx = e.clientX - startX
+      const rawDy = e.clientY - startY
 
-      const distance = Math.sqrt(lastDx * lastDx + lastDy * lastDy)
-      const squishAmount = Math.min(distance / (squish * 333), squish)
-      const angle = Math.atan2(lastDy, lastDx)
+      if (!activated) {
+        if (Math.sqrt(rawDx * rawDx + rawDy * rawDy) < threshold) return
+        activated = true
+      }
 
-      const cosA = Math.abs(Math.cos(angle))
-      const sinA = Math.abs(Math.sin(angle))
+      lastDx = rawDx * resistance
+      lastDy = rawDy * resistance
 
-      lastSx = 1 + cosA * squishAmount - sinA * squishAmount * 0.4
-      lastSy = 1 + sinA * squishAmount - cosA * squishAmount * 0.4
+      if (squishOnDrag) {
+        const distance = Math.sqrt(lastDx * lastDx + lastDy * lastDy)
+        const squishAmount = Math.min(distance / (squish * 333), squish)
+        const angle = Math.atan2(lastDy, lastDx)
+
+        const cosA = Math.abs(Math.cos(angle))
+        const sinA = Math.abs(Math.sin(angle))
+
+        lastSx = 1 + cosA * squishAmount - sinA * squishAmount * 0.4
+        lastSy = 1 + sinA * squishAmount - cosA * squishAmount * 0.4
+      }
 
       el.style.transition = "none"
       el.style.transform = `translate(${lastDx}px, ${lastDy}px) scaleX(${lastSx}) scaleY(${lastSy})`
     }
 
     const handlePointerUp = () => {
+      window.removeEventListener("pointermove", handlePointerMove)
+      window.removeEventListener("pointerup", handlePointerUp)
+
+      if (!activated) {
+        el.style.transform = ""
+        el.style.transition = ""
+        return
+      }
+
       el.style.transform = "translate(0px,0px) scaleX(1) scaleY(1)"
 
       const ox = lastDx * -overshoot
@@ -106,9 +132,6 @@ export function useElasticDrag({
         el.style.transition = ""
         animationRef.current = null
       }
-
-      window.removeEventListener("pointermove", handlePointerMove)
-      window.removeEventListener("pointerup", handlePointerUp)
     }
 
     window.addEventListener("pointermove", handlePointerMove)

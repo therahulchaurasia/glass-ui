@@ -1,79 +1,17 @@
 import { GlassButton } from "@/components/glass/glass-button"
+import {
+  GlassCard,
+  GlassCardHeader,
+  GlassCardTitle,
+  GlassCardDescription,
+  GlassCardContent,
+  GlassCardFooter,
+} from "@/components/glass/glass-card"
 
 export default function Home() {
   return (
     <div className="relative min-h-[200vh] bg-[#0a0e1a] font-sans antialiased overflow-x-hidden">
       <Content />
-    </div>
-  )
-}
-
-function GlassCard() {
-  return (
-    <div
-      className="fixed left-1/2 top-8 z-50 w-full max-w-sm -translate-x-1/2 overflow-hidden rounded-[2rem]"
-      style={{
-        // 1. Standard, highly performant CSS blur
-        backdropFilter: "blur(4px) saturate(180%) brightness(0.9)",
-        WebkitBackdropFilter: "blur(4px) saturate(180%) brightness(0.9)",
-      }}
-    >
-      {/* Layer 1: The "Thick Lens" Rim & Shadow Engine */}
-      <div
-        className="absolute inset-0 rounded-[inherit] pointer-events-none"
-        style={{
-          boxShadow: `
-					/* 1. The sharp outer glass edge */
-					inset 0 0 0 1px rgba(255, 255, 255, 0.15),
-					/* 2. The bright top rim light where light hits the curve */
-					inset 0 2px 4px rgba(255, 255, 255, 0.4),
-					/* 3. A deep, dark inner shadow at the bottom to create 3D volume/thickness */
-					inset 0 -16px 24px rgba(0, 0, 0, 0.15),
-					/* 4. A soft inner glow to simulate the interior of the glass */
-					inset 0 8px 24px rgba(255, 255, 255, 0.1),
-					/* 5. The drop shadow */
-					0 12px 40px rgba(0, 0, 0, 0.2)
-				`,
-        }}
-      />
-
-      <div
-        className="absolute inset-0 rounded-[inherit] pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at 50% 100%, rgba(180, 210, 255, 0.1) 0%, transparent 70%)`,
-        }}
-      />
-
-      {/* Layer 2: The Dome Surface Glare */}
-      {/* Instead of a flat gradient, we use a radial gradient to make the surface look convex (bulging outward like a lens) */}
-      <div
-        className="absolute inset-0 rounded-[inherit] pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(120% 120% at 50% 0%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 60%)",
-        }}
-      />
-
-      {/* Layer 3: The Performant Static Noise */}
-      <div
-        className="absolute inset-0 rounded-[inherit] pointer-events-none"
-        style={{
-          opacity: 0.04,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-          backgroundSize: "200px 200px",
-          mixBlendMode: "overlay",
-        }}
-      />
-
-      {/* Content */}
-      <div className="relative z-10 p-8 text-center">
-        <h1 className="mb-2 text-2xl font-bold tracking-wide text-white drop-shadow-sm">
-          Volumetric UI
-        </h1>
-        <p className="text-sm text-white/70">
-          Pure CSS performance. Zero SVG math.
-        </p>
-      </div>
     </div>
   )
 }
@@ -100,6 +38,49 @@ function Content() {
           </h1>
         </header>
         <GlassButton>Default</GlassButton>
+
+        <div className="mx-auto mt-16 max-w-sm text-left">
+          <GlassCard
+            elastic
+            
+            className="rounded-2xl"
+          >
+            <GlassCardHeader>
+              <GlassCardTitle>Weekly Forecast</GlassCardTitle>
+              <GlassCardDescription>San Francisco, CA</GlassCardDescription>
+            </GlassCardHeader>
+            <GlassCardContent className="space-y-3">
+              {[
+                { day: "Mon", temp: "18°", icon: "☀️", desc: "Sunny" },
+                { day: "Tue", temp: "16°", icon: "⛅", desc: "Partly cloudy" },
+                { day: "Wed", temp: "14°", icon: "🌧️", desc: "Light rain" },
+                { day: "Thu", temp: "15°", icon: "⛅", desc: "Partly cloudy" },
+                { day: "Fri", temp: "19°", icon: "☀️", desc: "Clear skies" },
+              ].map((row) => (
+                <div
+                  key={row.day}
+                  className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2.5"
+                >
+                  <span className="w-10 text-sm font-medium text-white/70">
+                    {row.day}
+                  </span>
+                  <span className="text-lg">{row.icon}</span>
+                  <span className="flex-1 px-3 text-sm text-white/50">
+                    {row.desc}
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums text-white/90">
+                    {row.temp}
+                  </span>
+                </div>
+              ))}
+            </GlassCardContent>
+            <GlassCardFooter className="justify-between text-xs text-white/40">
+              <span>Updated just now</span>
+              <span>5-day outlook</span>
+            </GlassCardFooter>
+          </GlassCard>
+        </div>
+
         <p className="mx-auto mt-10 max-w-lg text-base leading-relaxed text-white/60">
           Glass morphism distills interface design to its purest essence — light
           refracting through virtual matter, depth without weight, and
