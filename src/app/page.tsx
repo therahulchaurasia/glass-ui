@@ -4,10 +4,6 @@ export default function Home() {
   return (
     <div className="relative min-h-[200vh] bg-[#0a0e1a] font-sans antialiased overflow-x-hidden">
       <Content />
-      <div className="fixed left-1/2 top-8 z-50 w-full max-w-sm -translate-x-1/2 overflow-hidden">
-        <GlassButton>Default</GlassButton>
-      </div>
-      {/* <GlassCard /> */}
     </div>
   )
 }
@@ -91,7 +87,6 @@ function Content() {
         <div className="absolute bottom-0 left-[30%] h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,#1971c2,#1864ab)] opacity-55 blur-[80px]" />
         <div className="absolute bottom-[100px] right-[20%] h-[300px] w-[300px] rounded-full bg-[radial-gradient(circle,#2f9e44,#2b8a3e)] opacity-55 blur-[80px]" />
       </div>
-
       {/* Centered container */}
       <div className="relative z-10 mx-auto max-w-2xl px-6 py-24 text-center">
         <header className="space-y-4">
@@ -110,6 +105,13 @@ function Content() {
           refracting through virtual matter, depth without weight, and
           translucency layered with intention.
         </p>
+
+        {/* <div className="mt-10 flex justify-center gap-4"> */}
+        <GlassButton>Default</GlassButton>
+        <GlassButton variant="primary">Primary</GlassButton>
+        <GlassButton variant="outline">Outline</GlassButton>
+        <GlassButton variant="ghost">Ghost</GlassButton>
+        {/* </div> */}
 
         <figure className="mt-16 overflow-hidden rounded-2xl">
           <img

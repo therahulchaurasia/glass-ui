@@ -1,40 +1,72 @@
 "use client"
-// components/glass/glass-surface.tsx
+import { useElasticDrag } from "@/hooks/use-elastic-drag"
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
-interface GlassSurfaceProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode
-  className?: string
-  disablePress?: boolean
-}
+const glassSurfaceVariants = cva("relative overflow-hidden", {
+  variants: {
+    blur: {
+      sm: "[--glass-blur:4px]",
+      default: "",
+      lg: "[--glass-blur:16px]",
+      xl: "[--glass-blur:24px]",
+    },
+    tint: {
+      none: "",
+      light: "bg-white/5",
+      medium: "bg-white/10",
+      heavy: "bg-white/20",
+    },
+  },
+  defaultVariants: {
+    blur: "default",
+    tint: "none",
+  },
+})
 
-export function GlassSurface({
-  children,
+function GlassSurface({
   className,
-  disablePress = false,
+  blur,
+  tint,
+  pressable = false,
   style,
+  elastic = false,
+  children,
   ...props
-}: GlassSurfaceProps) {
+}: React.ComponentProps<"div"> &
+  VariantProps<typeof glassSurfaceVariants> & {
+    pressable?: boolean
+    elastic?: boolean
+  }) {
+  const { ref, onPointerDown } = useElasticDrag()
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (disablePress) return
+    if (!pressable) return
     const el = e.currentTarget
     el.style.transform = "scale(0.992)"
-    el.style.transition = `transform 80ms var(--ease-snappy)`
+    el.style.transition = "transform 80ms var(--ease-snappy)"
   }
 
   const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (disablePress) return
+    if (!pressable) return
     const el = e.currentTarget
     el.style.transform = "scale(1)"
-    el.style.transition = `transform 400ms var(--ease-spring)`
+    el.style.transition = "transform 400ms var(--ease-spring)"
   }
 
   return (
     <div
-      className={cn("relative overflow-hidden", className)}
+      ref={elastic ? (ref as React.RefObject<HTMLDivElement>) : undefined}
+      onPointerDown={elastic ? onPointerDown : undefined}
+      data-slot="glass-surface"
+      data-blur={blur ?? "default"}
+      data-tint={tint ?? "none"}
+      className={cn(glassSurfaceVariants({ blur, tint }), className)}
       style={{
-        backdropFilter: `blur(var(--glass-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness))`,
-        WebkitBackdropFilter: `blur(var(--glass-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness))`,
+        backdropFilter:
+          "blur(var(--glass-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness))",
+        WebkitBackdropFilter:
+          "blur(var(--glass-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness))",
         ...style,
       }}
       onMouseDown={handleMouseDown}
@@ -60,7 +92,8 @@ export function GlassSurface({
       <div
         className="pointer-events-none absolute inset-0 rounded-[inherit]"
         style={{
-          background: `radial-gradient(120% 120% at 50% 0%, rgba(255,255,255,var(--glass-dome-opacity)) 0%, rgba(255,255,255,0) 60%)`,
+          background:
+            "radial-gradient(120% 120% at 50% 0%, rgba(255,255,255,var(--glass-dome-opacity)) 0%, rgba(255,255,255,0) 60%)",
         }}
       />
 
@@ -75,8 +108,9 @@ export function GlassSurface({
         }}
       />
 
-      {/* Content */}
       <div className="relative z-10">{children}</div>
     </div>
   )
 }
+
+export { GlassSurface, glassSurfaceVariants }
