@@ -99,19 +99,12 @@ function Content() {
             Glass Morphism
           </h1>
         </header>
-
+        <GlassButton>Default</GlassButton>
         <p className="mx-auto mt-10 max-w-lg text-base leading-relaxed text-white/60">
           Glass morphism distills interface design to its purest essence — light
           refracting through virtual matter, depth without weight, and
           translucency layered with intention.
         </p>
-
-        {/* <div className="mt-10 flex justify-center gap-4"> */}
-        <GlassButton>Default</GlassButton>
-        <GlassButton variant="primary">Primary</GlassButton>
-        <GlassButton variant="outline">Outline</GlassButton>
-        <GlassButton variant="ghost">Ghost</GlassButton>
-        {/* </div> */}
 
         <figure className="mt-16 overflow-hidden rounded-2xl">
           <img
