@@ -20,9 +20,12 @@ export function useElasticDrag({
   const ref = useRef<HTMLElement>(null)
   const animationRef = useRef<Animation | null>(null)
 
+  const prefersReducedMotion = () =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
   const handlePointerDown = (e: React.PointerEvent) => {
     const el = ref.current
-    if (!el) return
+    if (!el || prefersReducedMotion()) return
 
     if (animationRef.current) {
       animationRef.current.cancel()

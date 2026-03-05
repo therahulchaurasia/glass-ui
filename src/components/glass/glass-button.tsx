@@ -14,13 +14,13 @@ const glassButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-white/88 border border-white/15  active:scale-[0.97]",
+        default: "text-white/88 border border-white/15 ",
         primary:
-          "bg-white/90 text-black/80 border border-white/60  active:scale-[0.97]",
+          "bg-white/90 text-black/80 border border-white/60 ",
         outline:
-          "border border-white/20 text-white/80 bg-transparent hover:bg-white/5  active:scale-[0.97]",
+          "border border-white/20 text-white/80 bg-transparent hover:bg-white/5 ",
         ghost:
-          "text-white/70 bg-transparent hover:bg-white/10 hover:text-white/90 active:scale-[0.97]",
+          "text-white/70 bg-transparent hover:bg-white/10 hover:text-white/90",
       },
       size: {
         default: "h-9 px-5 py-2",
