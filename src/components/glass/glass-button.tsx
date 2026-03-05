@@ -4,7 +4,10 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
-import { useElasticDrag } from "@/hooks/use-elastic-drag"
+import {
+  useElasticDrag,
+  type ElasticDragOptions,
+} from "@/hooks/use-elastic-drag"
 
 const glassButtonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap transition-all outline-none cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -60,6 +63,7 @@ function GlassButton({
   size = "default",
   asChild = false,
   elastic = true,
+  elasticOptions,
   style,
   ref,
   onPointerDown,
@@ -68,8 +72,9 @@ function GlassButton({
   VariantProps<typeof glassButtonVariants> & {
     asChild?: boolean
     elastic?: boolean
+    elasticOptions?: ElasticDragOptions
   }) {
-  const drag = useElasticDrag()
+  const drag = useElasticDrag(elasticOptions)
   const Comp = asChild ? Slot.Root : "button"
 
   const mergedRef = (node: HTMLButtonElement | null) => {
