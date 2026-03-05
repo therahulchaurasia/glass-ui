@@ -11,12 +11,11 @@ const glassButtonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "text-white/88 border border-white/15 hover:-translate-y-px active:scale-[0.97]",
+        default: "text-white/88 border border-white/15  active:scale-[0.97]",
         primary:
-          "bg-white/90 text-black/80 border border-white/60 hover:-translate-y-px active:scale-[0.97]",
+          "bg-white/90 text-black/80 border border-white/60  active:scale-[0.97]",
         outline:
-          "border border-white/20 text-white/80 bg-transparent hover:bg-white/5 hover:-translate-y-px active:scale-[0.97]",
+          "border border-white/20 text-white/80 bg-transparent hover:bg-white/5  active:scale-[0.97]",
         ghost:
           "text-white/70 bg-transparent hover:bg-white/10 hover:text-white/90 active:scale-[0.97]",
       },
@@ -33,7 +32,7 @@ const glassButtonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 )
 
 const glassButtonStyles: Record<string, React.CSSProperties> = {
@@ -46,15 +45,13 @@ const glassButtonStyles: Record<string, React.CSSProperties> = {
       "inset 0 0 0 1px var(--glass-rim-border), inset 0 1px 2px var(--glass-rim-top), var(--glass-shadow)",
   },
   primary: {
-    boxShadow:
-      "inset 0 1px 0 rgba(255,255,255,1), 0 4px 16px rgba(0,0,0,0.22)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,1), 0 4px 16px rgba(0,0,0,0.22)",
   },
 }
 
 function setRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
   if (typeof ref === "function") ref(value)
-  else if (ref)
-    (ref as React.MutableRefObject<T | null>).current = value
+  else if (ref) (ref as React.MutableRefObject<T | null>).current = value
 }
 
 function GlassButton({
@@ -76,8 +73,7 @@ function GlassButton({
   const Comp = asChild ? Slot.Root : "button"
 
   const mergedRef = (node: HTMLButtonElement | null) => {
-    if (elastic)
-      setRef(drag.ref as React.Ref<HTMLButtonElement>, node)
+    if (elastic) setRef(drag.ref as React.Ref<HTMLButtonElement>, node)
     setRef(ref, node)
   }
 
