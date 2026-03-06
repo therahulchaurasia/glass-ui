@@ -38,7 +38,15 @@ export function useElasticDrag({
       animationRef.current = null
     }
 
-    el.setPointerCapture(e.pointerId)
+    // Skip pointer capture for interactive elements so their native
+    // click/submit behaviour isn't swallowed.
+    const target = e.target as HTMLElement
+    const isInteractive = target.closest(
+      "button, a, input, select, textarea, label",
+    )
+    if (!isInteractive) {
+      el.setPointerCapture(e.pointerId)
+    }
 
     const startX = e.clientX
     const startY = e.clientY
@@ -124,7 +132,7 @@ export function useElasticDrag({
         {
           duration,
           easing: "linear",
-        }
+        },
       )
 
       animationRef.current.onfinish = () => {
