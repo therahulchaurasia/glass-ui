@@ -32,17 +32,19 @@ function GlassSlider({
       >
         <Slider.Range
           data-slot="glass-slider-range"
-          className="absolute rounded-full data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
+          className="absolute rounded-full data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full data-[orientation=vertical]:left-0"
           style={{
             background:
-              "linear-gradient(to right, rgba(255,255,255,0.5), rgba(255,255,255,0.78))",
+              props.orientation === "vertical"
+                ? "linear-gradient(to top, rgba(255,255,255,0.5), rgba(255,255,255,0.78))"
+                : "linear-gradient(to right, rgba(255,255,255,0.5), rgba(255,255,255,0.78))",
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.55)",
           }}
         />
       </Slider.Track>
 
       {Array.from({ length: thumbCount }).map((_, i) => (
-        <GlassSliderThumb key={i} />
+        <GlassSliderThumb key={i} orientation={props.orientation} />
       ))}
     </Slider.Root>
   )
@@ -66,10 +68,11 @@ function setGlassActive(
 ) {
   if (active) {
     pill.style.background = "transparent"
-    pill.style.boxShadow = "inset 0 0 0 1.5px rgba(255,255,255,0.55)"
-    filterEl.style.opacity = "0"
-    overlayEl.style.opacity = "0"
-    specularEl.style.opacity = "0"
+    pill.style.boxShadow =
+      "inset 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 2px rgba(255,255,255,0.4), 0 12px 40px rgba(0,0,0,0.2)"
+    filterEl.style.opacity = "1"
+    overlayEl.style.opacity = "0.5"
+    specularEl.style.opacity = "1"
   } else {
     pill.style.background = "#fff"
     pill.style.boxShadow =
@@ -82,8 +85,12 @@ function setGlassActive(
 
 function GlassSliderThumb({
   className,
+  orientation,
   ...props
-}: React.ComponentProps<typeof Slider.Thumb>) {
+}: React.ComponentProps<typeof Slider.Thumb> & {
+  orientation?: "horizontal" | "vertical"
+}) {
+  const isVertical = orientation === "vertical"
   const pillRef = React.useRef<HTMLDivElement>(null)
   const filterRef = React.useRef<HTMLDivElement>(null)
   const overlayRef = React.useRef<HTMLDivElement>(null)
@@ -92,7 +99,7 @@ function GlassSliderThumb({
   const isDragging = React.useRef(false)
   const isHovered = React.useRef(false)
 
-  const prevX = React.useRef(0)
+  const prevPos = React.useRef(0)
   const prevT = React.useRef(0)
   const currentSx = React.useRef(1)
   const currentSy = React.useRef(1)
@@ -132,7 +139,7 @@ function GlassSliderThumb({
     isDragging.current = true
     currentSx.current = 1
     currentSy.current = 1
-    prevX.current = e.clientX
+    prevPos.current = isVertical ? e.clientY : e.clientX
     prevT.current = e.timeStamp
 
     setGlassActive(pill, filterEl, overlayEl, specularEl, true)
@@ -152,20 +159,29 @@ function GlassSliderThumb({
       if (!isDragging.current) return
 
       const dt = ev.timeStamp - prevT.current
-      const dx = ev.clientX - prevX.current
-      const vx = dt > 0 ? dx / dt : 0
+      const pos = isVertical ? ev.clientY : ev.clientX
+      const delta = pos - prevPos.current
+      const vel = dt > 0 ? delta / dt : 0
 
-      prevX.current = ev.clientX
+      prevPos.current = pos
       prevT.current = ev.timeStamp
 
-      const speed = Math.abs(vx)
-      const sx = 1 + clamp(speed * 0.2, 0, 0.5)
-      const sy = 1 - clamp(speed * 0.2, 0, 0.5)
-
-      currentSx.current = sx
-      currentSy.current = sy
+      const speed = Math.abs(vel)
+      if (isVertical) {
+        // For vertical: stretch along Y, compress along X
+        const sy = 1 + clamp(speed * 0.25, 0, 0.5)
+        const sx = 1 - clamp(speed * 0.19, 0, 0.5)
+        currentSx.current = sx
+        currentSy.current = sy
+      } else {
+        // For horizontal: stretch along X, compress along Y
+        const sx = 1 + clamp(speed * 0.21, 0, 0.5)
+        const sy = 1 - clamp(speed * 0.16, 0, 0.5)
+        currentSx.current = sx
+        currentSy.current = sy
+      }
       pill.style.transition = "background 200ms ease, box-shadow 200ms ease"
-      pill.style.transform = `scale(1.25) scaleX(${sx}) scaleY(${sy})`
+      pill.style.transform = `scale(1.25) scaleX(${currentSx.current}) scaleY(${currentSy.current})`
     }
 
     const handleUp = () => {
@@ -185,33 +201,57 @@ function GlassSliderThumb({
       const b2 = squish * 0.3
       const b3 = squish * 0.1
 
-      animRef.current = pill.animate(
-        [
-          {
-            transform: `scale(1.25) scaleX(${fromSx}) scaleY(${fromSy})`,
-            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-          },
-          {
-            transform: `scaleX(${1 + b1}) scaleY(${1 - b1})`,
-            offset: 0.28,
-            easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-          },
-          {
-            transform: `scaleX(${1 - b2}) scaleY(${1 + b2})`,
-            offset: 0.52,
-            easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-          },
-          {
-            transform: `scaleX(${1 + b3}) scaleY(${1 - b3})`,
-            offset: 0.74,
-            easing: "cubic-bezier(0.33, 0, 0, 1)",
-          },
-          {
-            transform: "scale(1)",
-          },
-        ],
-        { duration: 700, easing: "linear" },
-      )
+      // For vertical, swap the bounce axes so the wobble follows the drag direction
+      const bounceKeyframes = isVertical
+        ? [
+            {
+              transform: `scale(1.25) scaleX(${fromSx}) scaleY(${fromSy})`,
+              easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+            },
+            {
+              transform: `scaleX(${1 - b1}) scaleY(${1 + b1})`,
+              offset: 0.28,
+              easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            },
+            {
+              transform: `scaleX(${1 + b2}) scaleY(${1 - b2})`,
+              offset: 0.52,
+              easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            },
+            {
+              transform: `scaleX(${1 - b3}) scaleY(${1 + b3})`,
+              offset: 0.74,
+              easing: "cubic-bezier(0.33, 0, 0, 1)",
+            },
+            { transform: "scale(1)" },
+          ]
+        : [
+            {
+              transform: `scale(1.25) scaleX(${fromSx}) scaleY(${fromSy})`,
+              easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+            },
+            {
+              transform: `scaleX(${1 + b1}) scaleY(${1 - b1})`,
+              offset: 0.28,
+              easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            },
+            {
+              transform: `scaleX(${1 - b2}) scaleY(${1 + b2})`,
+              offset: 0.52,
+              easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            },
+            {
+              transform: `scaleX(${1 + b3}) scaleY(${1 - b3})`,
+              offset: 0.74,
+              easing: "cubic-bezier(0.33, 0, 0, 1)",
+            },
+            { transform: "scale(1)" },
+          ]
+
+      animRef.current = pill.animate(bounceKeyframes, {
+        duration: 700,
+        easing: "linear",
+      })
 
       animRef.current.onfinish = () => {
         if (pillRef.current) {
@@ -237,7 +277,11 @@ function GlassSliderThumb({
         "block outline-none! ring-0! disabled:pointer-events-none",
         className,
       )}
-      style={{ width: THUMB_W, height: THUMB_H, overflow: "visible" }}
+      style={{
+        width: isVertical ? THUMB_H : THUMB_W,
+        height: isVertical ? THUMB_W : THUMB_H,
+        overflow: "visible",
+      }}
       onPointerDown={handlePointerDown}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
@@ -267,8 +311,8 @@ function GlassSliderThumb({
             zIndex: 0,
             borderRadius: "inherit",
             overflow: "hidden",
-            backdropFilter: "blur(1px) saturate(180%)",
-            WebkitBackdropFilter: "blur(1px) saturate(180%)",
+            backdropFilter: "blur(0.3px) saturate(180%) brightness(0.9)",
+            WebkitBackdropFilter: "blur(0.3px) saturate(180%) brightness(0.9)",
             opacity: 0,
             transition: "opacity 200ms ease",
           }}
@@ -296,12 +340,8 @@ function GlassSliderThumb({
             zIndex: 2,
             borderRadius: "inherit",
             overflow: "hidden",
-            boxShadow: [
-              "inset 1px 1px 0 rgba(255,255,255,0.35)",
-              "inset 1px 3px 0 rgba(255,255,255,0.08)",
-              "inset 0 0 22px rgba(255,255,255,0.55)",
-              "inset -1px -1px 0 rgba(255,255,255,0.20)",
-            ].join(", "),
+            boxShadow:
+              "inset 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 2px rgba(255,255,255,0.4)",
             opacity: 0,
             transition: "opacity 200ms ease",
           }}

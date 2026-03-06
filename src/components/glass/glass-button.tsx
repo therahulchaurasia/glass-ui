@@ -15,8 +15,7 @@ const glassButtonVariants = cva(
     variants: {
       variant: {
         default: "text-white/88 border border-white/15 ",
-        primary:
-          "bg-white/90 text-black/80 border border-white/60 ",
+        primary: "bg-white/90 text-black/80 border border-white/60 ",
         outline:
           "border border-white/20 text-white/80 bg-transparent hover:bg-white/5 ",
         ghost:
@@ -67,6 +66,7 @@ function GlassButton({
   style,
   ref,
   onPointerDown,
+  onClick,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof glassButtonVariants> & {
@@ -75,9 +75,11 @@ function GlassButton({
     elasticOptions?: ElasticDragOptions
   }) {
   const drag = useElasticDrag(elasticOptions)
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null)
   const Comp = asChild ? Slot.Root : "button"
 
   const mergedRef = (node: HTMLButtonElement | null) => {
+    buttonRef.current = node
     if (elastic) setRef(drag.ref as React.Ref<HTMLButtonElement>, node)
     setRef(ref, node)
   }
@@ -85,6 +87,35 @@ function GlassButton({
   const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (elastic) drag.onPointerDown(e)
     onPointerDown?.(e)
+  }
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const el = buttonRef.current
+    if (el && !elastic) {
+      el.animate(
+        [
+          { transform: "scale(1)", easing: "ease-out" },
+          {
+            transform: "scale(0.93)",
+            offset: 0.25,
+            easing: "cubic-bezier(0.22,1,0.36,1)",
+          },
+          {
+            transform: "scale(1.04)",
+            offset: 0.55,
+            easing: "cubic-bezier(0.4,0,0.2,1)",
+          },
+          {
+            transform: "scale(0.985)",
+            offset: 0.78,
+            easing: "cubic-bezier(0.33,0,0,1)",
+          },
+          { transform: "scale(1)" },
+        ],
+        { duration: 500, easing: "linear" },
+      )
+    }
+    onClick?.(e)
   }
 
   return (
@@ -96,6 +127,7 @@ function GlassButton({
       className={cn(glassButtonVariants({ variant, size }), className)}
       style={{ ...glassButtonStyles[variant ?? "default"], ...style }}
       onPointerDown={handlePointerDown}
+      onClick={handleClick}
       {...props}
     />
   )
