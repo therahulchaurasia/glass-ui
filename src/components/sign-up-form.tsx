@@ -20,7 +20,7 @@ export function SignUpForm() {
 
   return (
     <GlassCard
-      elastic={false}
+      elastic={true}
       className="mx-auto w-full max-w-sm rounded-2xl text-left"
     >
       <form onSubmit={handleSubmit}>
