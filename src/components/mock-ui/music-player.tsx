@@ -69,7 +69,7 @@ function MusicPlayer() {
             <div className="mb-5">
               <GlassSlider
                 value={[progress]}
-                onValueChange={setProgress}
+                onValueChange={(v) => setProgress(v[0])}
                 min={0}
                 max={100}
               />
@@ -106,7 +106,7 @@ function MusicPlayer() {
               <div className="flex-1">
                 <GlassSlider
                   value={[volume]}
-                  onValueChange={setVolume}
+                  onValueChange={(v) => setVolume(v[0])}
                   min={0}
                   max={100}
                 />
