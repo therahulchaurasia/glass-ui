@@ -1,5 +1,8 @@
+"use client"
 import { Mail, Loader2, Plus, ChevronRight } from "lucide-react"
 import { GlassButton } from "@/components/glass/glass-button"
+import { GlassSlider } from "@/components/glass/glass-slider"
+import { Slider } from "@/components/ui/slider"
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-[#0a0e1a] font-sans antialiased overflow-x-hidden">
@@ -9,7 +12,35 @@ export default function Home() {
         <div className="absolute bottom-0 left-[30%] h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,#1971c2,#1864ab)] opacity-55 blur-[80px]" />
         <div className="absolute bottom-[100px] right-[20%] h-[300px] w-[300px] rounded-full bg-[radial-gradient(circle,#2f9e44,#2b8a3e)] opacity-55 blur-[80px]" />
       </div>
-      <GlassButtonShowcase />
+      <div className="flex flex-col gap-12 pt-24 max-w-6xl mx-auto">
+        {/* <GlassButtonShowcase /> */}
+        {/* <GlassSliderShowcase /> */}
+
+        <GlassSlider
+          defaultValue={[50]}
+          max={100}
+          step={1}
+          onValueChange={(value) => console.log({ value })}
+          onValueCommit={(finalValue) => console.log({ finalValue })}
+        />
+
+        <GlassSlider
+          defaultValue={[50]}
+          orientation="vertical"
+          max={100}
+          step={1}
+          onValueChange={(value) => console.log({ value })}
+          onValueCommit={(finalValue) => console.log({ finalValue })}
+        />
+
+        <Slider defaultValue={[50]} orientation="vertical" max={100} step={1} />
+        <Slider
+          defaultValue={[50]}
+          orientation="horizontal"
+          max={100}
+          step={1}
+        />
+      </div>
     </div>
   )
 }
@@ -117,6 +148,191 @@ function GlassButtonShowcase() {
           <GlassButton size="icon-lg">
             <Plus />
           </GlassButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function GlassSliderShowcase() {
+  return (
+    <div className="mx-auto max-w-4xl p-8">
+      <div className="mb-12 text-center">
+        <h2 className="text-2xl font-bold text-white tracking-widest drop-shadow-md">
+          Glass Slider
+        </h2>
+        <p className="mt-2 text-sm text-white/60 uppercase tracking-widest">
+          Comprehensive showcase of the Glass Slider component
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
+        {/* --- HORIZONTAL VARIANTS --- */}
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Default Value
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              Uncontrolled, single value
+            </p>
+          </div>
+          <div className="h-12 flex items-center px-4">
+            <GlassSlider
+              defaultValue={[50]}
+              max={100}
+              step={1}
+              onValueChange={(value) => console.log({ value })}
+              onValueCommit={(finalValue) => console.log({ finalValue })}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Range Values
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              Multiple thumbs [25, 75]
+            </p>
+          </div>
+          <div className="h-12 flex items-center px-4">
+            <GlassSlider
+              defaultValue={[25, 75]}
+              max={100}
+              step={1}
+              onValueChange={(value) => console.log({ value })}
+              onValueCommit={(finalValue) => console.log({ finalValue })}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Discrete Steps
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              With step=10, snapping active
+            </p>
+          </div>
+          <div className="h-12 flex items-center px-4">
+            <GlassSlider
+              defaultValue={[30]}
+              min={0}
+              max={100}
+              step={10}
+              onValueChange={(value) => console.log({ value })}
+              onValueCommit={(finalValue) => console.log({ finalValue })}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Disabled State
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              Non-interactive, reduced opacity
+            </p>
+          </div>
+          <div className="h-12 flex items-center px-4">
+            <GlassSlider
+              disabled
+              defaultValue={[40]}
+              max={100}
+              step={1}
+              onValueChange={(value) => console.log({ value })}
+              onValueCommit={(finalValue) => console.log({ finalValue })}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Inverted Direction
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              Fills from right to left
+            </p>
+          </div>
+          <div className="h-12 flex items-center px-4">
+            <GlassSlider
+              inverted
+              defaultValue={[60]}
+              max={100}
+              step={1}
+              onValueChange={(value) => console.log({ value })}
+              onValueCommit={(finalValue) => console.log({ finalValue })}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              High Minimum Value
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              min=50, max=100
+            </p>
+          </div>
+          <div className="h-12 flex items-center px-4">
+            <GlassSlider
+              defaultValue={[75]}
+              min={50}
+              max={100}
+              step={1}
+              onValueChange={(value) => console.log({ value })}
+              onValueCommit={(finalValue) => console.log({ finalValue })}
+            />
+          </div>
+        </div>
+
+        {/* --- VERTICAL VARIANTS --- */}
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Vertical Default
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              orientation="vertical"
+            </p>
+          </div>
+          <div className="h-64 flex items-center justify-center">
+            <GlassSlider
+              orientation="vertical"
+              defaultValue={[50]}
+              max={100}
+              step={1}
+              onValueChange={(value) => console.log({ value })}
+              onValueCommit={(finalValue) => console.log({ finalValue })}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Vertical Range
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              Multiple vertical thumbs
+            </p>
+          </div>
+          <div className="h-64 flex items-center justify-center">
+            <GlassSlider
+              orientation="vertical"
+              defaultValue={[30, 80]}
+              max={100}
+              step={1}
+              onValueChange={(value) => console.log({ value })}
+              onValueCommit={(finalValue) => console.log({ finalValue })}
+            />
+          </div>
         </div>
       </div>
     </div>
