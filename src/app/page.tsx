@@ -24,9 +24,16 @@ export default function Home() {
       </div>
       <div className="flex flex-col gap-12 pt-24 max-w-6xl mx-auto">
         {/* <GlassButtonShowcase /> */}
-        {/* <GlassSliderShowcase /> */}
+        <GlassSlider
+          defaultValue={[50]}
+          max={100}
+          step={1}
+          onValueChange={(value) => console.log({ value })}
+          onValueCommit={(finalValue) => console.log({ finalValue })}
+        />
+        <GlassSliderShowcase />
 
-        <GlassCardShowcase />
+        {/* <GlassCardShowcase /> */}
       </div>
     </div>
   )

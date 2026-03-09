@@ -6,6 +6,46 @@ import { cn } from "@/lib/utils"
 
 type ThumbShape = "pill" | "circle"
 
+/**
+ * Options to tune the elastic and wobble physics of the slider thumb.
+ */
+export interface GlassSliderAnimationOptions {
+  /** How big the thumb gets when you hover over it. Default: 1.22 */
+  hoverScale?: number
+  /** How big the thumb gets while you are dragging it. Default: 1.25 */
+  pressScale?: number
+
+  /** How much the thumb stretches out in the direction you are dragging. Default: 0.21 */
+  squishStretchFactor?: number
+  /** How much the thumb thins out on the sides while dragging. Default: 0.16 */
+  squishCompressFactor?: number
+  /** The maximum limit for how much the thumb can stretch or compress. Default: 0.5 */
+  squishMax?: number
+
+  /** How quickly the wobble effect builds up. Lower means it reaches maximum wobble at slower speeds. Default: 1.2 */
+  wobbleIntensityDivisor?: number
+  /** The minimum drag speed required to trigger a pause wobble. Default: 0.05 */
+  wobbleThreshold?: number
+  /** How far the thumb leans forward (in degrees) when wobbling. Default: -2 */
+  wobbleMaxSkew?: number
+  /** How much the thumb squishes during the pause wobble. Default: 0.38 */
+  wobbleSquishBudget?: number
+  /** Minimum time (in milliseconds) the wobble animation takes to finish. Default: 800 */
+  wobbleDurationBase?: number
+  /** Extra time (in milliseconds) added to the wobble animation at high speeds. Default: 600 */
+  wobbleDurationScale?: number
+  /** How long you have to hold still (in ms) before the wobble starts. Default: 50 */
+  wobblePauseDelay?: number
+
+  /** How squishy the bounce looks when you let go of the slider. Default: 0.18 */
+  releaseSquish?: number
+  /** How long (in ms) the release bounce animation takes. Default: 700 */
+  releaseDuration?: number
+
+  /** How smoothly the slider tracks your current velocity rather than jittering on sudden stops. (0 = raw velocity, 1 = sticks completely to old velocity). Default: 0.7 */
+  velocitySmoothing?: number
+}
+
 const PILL_W = 48
 const PILL_H = 28
 const CIRCLE_SIZE = 28
@@ -16,11 +56,13 @@ function GlassSlider({
   thumbShape = "pill",
   thumbWidth,
   thumbHeight,
+  animationOptions,
   ...props
 }: React.ComponentProps<typeof Slider.Root> & {
   thumbShape?: ThumbShape
   thumbWidth?: number
   thumbHeight?: number
+  animationOptions?: GlassSliderAnimationOptions
 }) {
   const thumbCount = (props.value ?? props.defaultValue ?? [0]).length
   const isPointerDownRef = React.useRef(false)
@@ -76,6 +118,7 @@ function GlassSlider({
           thumbShape={thumbShape}
           thumbWidth={thumbWidth}
           thumbHeight={thumbHeight}
+          animationOptions={animationOptions}
         />
       ))}
     </Slider.Root>
@@ -119,6 +162,7 @@ function GlassSliderThumb({
   thumbShape = "pill",
   thumbWidth,
   thumbHeight,
+  animationOptions = {},
   ...props
 }: React.ComponentProps<typeof Slider.Thumb> & {
   orientation?: "horizontal" | "vertical"
@@ -126,8 +170,27 @@ function GlassSliderThumb({
   thumbShape?: ThumbShape
   thumbWidth?: number
   thumbHeight?: number
+  animationOptions?: GlassSliderAnimationOptions
 }) {
   const isVertical = orientation === "vertical"
+
+  const {
+    hoverScale = 1.22,
+    pressScale = 1.25,
+    squishStretchFactor = 0.21,
+    squishCompressFactor = 0.16,
+    squishMax = 0.5,
+    wobbleIntensityDivisor = 1.2,
+    wobbleThreshold = 0.05,
+    wobbleMaxSkew = -2,
+    wobbleSquishBudget = 0.38,
+    wobbleDurationBase = 800,
+    wobbleDurationScale = 600,
+    wobblePauseDelay = 50,
+    releaseSquish = 0.18,
+    releaseDuration = 700,
+    velocitySmoothing = 0.7,
+  } = animationOptions
 
   // Resolve final thumb dimensions based on shape + user overrides
   const resolvedW =
@@ -241,8 +304,8 @@ function GlassSliderThumb({
 
     // ── Intensity: normalise smoothed speed to 0..1 ──
     const speed = Math.abs(lastVelRef.current)
-    const intensity = clamp(speed / 1.2, 0, 1)
-    if (intensity < 0.05) return
+    const intensity = clamp(speed / wobbleIntensityDivisor, 0, 1)
+    if (intensity < wobbleThreshold) return
 
     // ── Skew direction ──
     // Negative dir → skewY tilts the shape visually toward drag direction
@@ -251,17 +314,17 @@ function GlassSliderThumb({
     const skewAxis = isVertical ? "skewX" : "skewY"
 
     // ── Skew angles (degrees) — each step is smaller (damped) ──
-    const maxSkew = -2
+    const maxSkew = wobbleMaxSkew
     const s1 = maxSkew * intensity * dir // biggest lean
     const s2 = maxSkew * 0.55 * intensity * -dir // counter-lean (opposite)
     const s3 = maxSkew * 0.25 * intensity * dir // tiny settle
 
     // ── Squish amplitudes — same damping pattern ──
-    // w  = total deformation budget at this intensity (max 0.48)
+    // w  = total deformation budget at this intensity (max configurable, e.g. 0.38)
     // w1 = 70% of w  →  first bounce (most noticeable)
     // w2 = 35% of w  →  counter-bounce
     // w3 = 14% of w  →  settle
-    const w = 0.38 * intensity
+    const w = wobbleSquishBudget * intensity
     const w1 = w * 0.47
     const w2 = w * 0.25
     const w3 = w * 0.08
@@ -279,74 +342,72 @@ function GlassSliderThumb({
     const keyframes = isVertical
       ? [
           {
-            transform: `scale(1.25) scaleX(${fromSx}) scaleY(${fromSy})`,
+            transform: `scale(${pressScale}) scaleX(${fromSx}) scaleY(${fromSy})`,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s1}deg) scaleX(${1 - w1})`,
+            transform: `scale(${pressScale}) ${skewAxis}(${s1}deg) scaleX(${1 - w1})`,
             offset: 0.25,
             easing: "cubic-bezier(0.4, 0, 0.2, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s2}deg) scaleX(${1 + w2})`,
+            transform: `scale(${pressScale}) ${skewAxis}(${s2}deg) scaleX(${1 + w2})`,
             offset: 0.46,
             easing: "cubic-bezier(0.4, 0, 0.2, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s3}deg) scaleX(${1 - w3})`,
+            transform: `scale(${pressScale}) ${skewAxis}(${s3}deg) scaleX(${1 - w3})`,
             offset: 0.66,
             easing: "cubic-bezier(0.33, 0, 0, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s4}deg) scaleX(${1 + w4})`,
+            transform: `scale(${pressScale}) ${skewAxis}(${s4}deg) scaleX(${1 + w4})`,
             offset: 0.84,
             easing: "cubic-bezier(0.33, 0, 0, 1)",
           },
-          { transform: "scale(1.25)" },
+          { transform: `scale(${pressScale})` },
         ]
       : [
           {
-            transform: `scale(1.25) scaleX(${fromSx}) scaleY(${fromSy})`,
+            transform: `scale(${pressScale}) scaleX(${fromSx}) scaleY(${fromSy})`,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s1}deg) scaleY(${1 - w1})`,
+            transform: `scale(${pressScale}) ${skewAxis}(${s1}deg) scaleY(${1 - w1})`,
             offset: 0.25,
             easing: "cubic-bezier(0.4, 0, 0.2, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s2}deg) scaleY(${1 + w2})`,
+            transform: `scale(${pressScale}) ${skewAxis}(${s2}deg) scaleY(${1 + w2})`,
             offset: 0.46,
             easing: "cubic-bezier(0.4, 0, 0.2, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s3}deg) scaleY(${1 - w3})`,
+            transform: `scale(${pressScale}) ${skewAxis}(${s3}deg) scaleY(${1 - w3})`,
             offset: 0.66,
             easing: "cubic-bezier(0.33, 0, 0, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s4}deg) scaleY(${1 + w4})`,
+            transform: `scale(${pressScale}) ${skewAxis}(${s4}deg) scaleY(${1 + w4})`,
             offset: 0.84,
             easing: "cubic-bezier(0.33, 0, 0, 1)",
           },
-          { transform: "scale(1.25)" },
+          { transform: `scale(${pressScale})` },
         ]
 
     // ── Duration scales with intensity ──
-    // Slow drags: ~800ms (quick, light settle)
-    // Fast drags: ~1400ms (more breathing room for the larger bounces)
-    const wobbleDuration = 800 + intensity * 600
+    const wobbleDuration = wobbleDurationBase + intensity * wobbleDurationScale
 
     pauseAnimRef.current = pill.animate(keyframes, {
       duration: wobbleDuration,
       easing: "ease-out",
     })
 
-    // When the animation finishes naturally, lock the pill at scale(1.25)
+    // When the animation finishes naturally, lock the pill at pressScale
     // and reset the squish tracking so the next drag starts fresh.
     pauseAnimRef.current.onfinish = () => {
       if (isDragging.current && pillRef.current) {
-        pillRef.current.style.transform = "scale(1.25)"
+        pillRef.current.style.transform = `scale(${pressScale})`
       }
       currentSx.current = 1
       currentSy.current = 1
@@ -382,7 +443,7 @@ function GlassSliderThumb({
       if (!pill || !filterEl || !overlayEl || !specularEl) return
       setGlassActive(pill, filterEl, overlayEl, specularEl, false)
       pill.style.transition = ""
-      pill.style.transform = isHovered.current ? "scale(1.22)" : ""
+      pill.style.transform = isHovered.current ? `scale(${hoverScale})` : ""
       currentSx.current = 1
       currentSy.current = 1
       return
@@ -411,7 +472,7 @@ function GlassSliderThumb({
 
     setGlassActive(pill, filterEl, overlayEl, specularEl, false)
 
-    const squish = 0.18
+    const squish = releaseSquish
     const b1 = squish * 0.7
     const b2 = squish * 0.3
     const b3 = squish * 0.1
@@ -419,7 +480,7 @@ function GlassSliderThumb({
     const bounceKeyframes = isVertical
       ? [
           {
-            transform: `scale(1.25) scaleX(${fromSx}) scaleY(${fromSy})`,
+            transform: `scale(${pressScale}) scaleX(${fromSx}) scaleY(${fromSy})`,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
           {
@@ -441,7 +502,7 @@ function GlassSliderThumb({
         ]
       : [
           {
-            transform: `scale(1.25) scaleX(${fromSx}) scaleY(${fromSy})`,
+            transform: `scale(${pressScale}) scaleX(${fromSx}) scaleY(${fromSy})`,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
           {
@@ -463,14 +524,14 @@ function GlassSliderThumb({
         ]
 
     animRef.current = pill.animate(bounceKeyframes, {
-      duration: 700,
+      duration: releaseDuration,
       easing: "linear",
     })
 
     animRef.current.onfinish = () => {
       if (pillRef.current) {
         if (isHovered.current) {
-          applyHoverScale(pillRef.current, 1.22)
+          applyHoverScale(pillRef.current, hoverScale)
         } else {
           pillRef.current.style.transform = ""
         }
@@ -507,27 +568,28 @@ function GlassSliderThumb({
       prevPos.current = pos
       prevT.current = ev.timeStamp
 
-      // Exponential smoothing: retain 70% of previous velocity so a
+      // Exponential smoothing: retain velocitySmoothing of previous velocity so a
       // sudden stop doesn't zero-out the stored speed. This makes the
       // wobble-on-pause trigger reliably even on hard stops.
-      lastVelRef.current = lastVelRef.current * 0.7 + vel * 0.3
+      lastVelRef.current =
+        lastVelRef.current * velocitySmoothing + vel * (1 - velocitySmoothing)
       const speed = Math.abs(vel)
 
       // Skip squish deformation when reduced motion is preferred
       if (!prefersReducedMotion.current) {
         if (isVertical) {
-          const sy = 1 + clamp(speed * 0.25, 0, 0.5)
-          const sx = 1 - clamp(speed * 0.19, 0, 0.5)
+          const sy = 1 + clamp(speed * squishStretchFactor, 0, squishMax)
+          const sx = 1 - clamp(speed * squishCompressFactor, 0, squishMax)
           currentSx.current = sx
           currentSy.current = sy
         } else {
-          const sx = 1 + clamp(speed * 0.21, 0, 0.5)
-          const sy = 1 - clamp(speed * 0.16, 0, 0.5)
+          const sx = 1 + clamp(speed * squishStretchFactor, 0, squishMax)
+          const sy = 1 - clamp(speed * squishCompressFactor, 0, squishMax)
           currentSx.current = sx
           currentSy.current = sy
         }
         pill.style.transition = "background 200ms ease, box-shadow 200ms ease"
-        pill.style.transform = `scale(1.25) scaleX(${currentSx.current}) scaleY(${currentSy.current})`
+        pill.style.transform = `scale(${pressScale}) scaleX(${currentSx.current}) scaleY(${currentSy.current})`
       }
 
       // Reset pause detection timer (skip if reduced motion)
@@ -535,7 +597,7 @@ function GlassSliderThumb({
         if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current)
         pauseTimerRef.current = setTimeout(() => {
           runPauseWobble(pill)
-        }, 50)
+        }, wobblePauseDelay)
       }
     }
 
@@ -554,7 +616,7 @@ function GlassSliderThumb({
     const pill = pillRef.current
     if (!pill || isDragging.current || animRef.current) return
     isHovered.current = true
-    if (!prefersReducedMotion.current) applyHoverScale(pill, 1.22)
+    if (!prefersReducedMotion.current) applyHoverScale(pill, hoverScale)
   }
 
   const handlePointerLeave = () => {
@@ -590,7 +652,7 @@ function GlassSliderThumb({
 
     pill.style.transition =
       "background 200ms ease, box-shadow 200ms ease, transform 180ms cubic-bezier(0.34,1.56,0.64,1)"
-    pill.style.transform = "scale(1.25)"
+    pill.style.transform = `scale(${pressScale})`
 
     setTimeout(() => {
       if (isDragging.current && pillRef.current) {
@@ -627,7 +689,7 @@ function GlassSliderThumb({
 
     setGlassActive(pill, filterEl, overlayEl, specularEl, true)
     pill.style.transition = "background 200ms ease, box-shadow 200ms ease"
-    pill.style.transform = "scale(1.25)"
+    pill.style.transform = `scale(${pressScale})`
 
     // Attach listeners so this thumb properly cleans up on release
     attachDragListeners(pill)
