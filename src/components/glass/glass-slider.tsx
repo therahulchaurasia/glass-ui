@@ -197,9 +197,9 @@ function GlassSliderThumb({
     const fromSx = currentSx.current
     const fromSy = currentSy.current
 
-    // ── Intensity: normalise speed to 0..1 ──
+    // ── Intensity: normalise smoothed speed to 0..1 ──
     const speed = Math.abs(lastVelRef.current)
-    const intensity = clamp(speed / 1.8, 0, 1)
+    const intensity = clamp(speed / 1.2, 0, 1)
     if (intensity < 0.05) return
 
     // ── Skew direction ──
@@ -209,50 +209,57 @@ function GlassSliderThumb({
     const skewAxis = isVertical ? "skewX" : "skewY"
 
     // ── Skew angles (degrees) — each step is smaller (damped) ──
-    const maxSkew = 2
+    const maxSkew = -2
     const s1 = maxSkew * intensity * dir // biggest lean
-    const s2 = maxSkew * 0.35 * intensity * -dir // counter-lean (opposite)
-    const s3 = maxSkew * 0.1 * intensity * dir // tiny settle
+    const s2 = maxSkew * 0.55 * intensity * -dir // counter-lean (opposite)
+    const s3 = maxSkew * 0.25 * intensity * dir // tiny settle
 
     // ── Squish amplitudes — same damping pattern ──
-    // w  = total deformation budget at this intensity (max 0.32)
-    // w1 = 65% of w  →  first bounce (most noticeable)
-    // w2 = 25% of w  →  counter-bounce
-    // w3 =  8% of w  →  settle (barely visible)
-    const w = 0.32 * intensity
-    const w1 = w * 0.45
+    // w  = total deformation budget at this intensity (max 0.48)
+    // w1 = 70% of w  →  first bounce (most noticeable)
+    // w2 = 35% of w  →  counter-bounce
+    // w3 = 14% of w  →  settle
+    const w = 0.38 * intensity
+    const w1 = w * 0.47
     const w2 = w * 0.25
     const w3 = w * 0.08
 
+    // ── Extra micro-bounce for high intensity ──
+    // At high speeds, 3 bounces snap to rest too quickly and feel jarring.
+    // We add a 4th micro-oscillation (w4/s4) that only becomes visible
+    // above ~40% intensity, giving fast drags a smoother tail-off.
+    const w4 = w * 0.04
+    const s4 = maxSkew * 0.06 * intensity * -dir
+
     // ── Build keyframes ──
-    // Vertical: stretches height (scaleY > 1) and compresses width
-    // Horizontal: stretches width (scaleX > 1) and compresses height
+    // Vertical: stretches width (scaleX); Horizontal: stretches height (scaleY)
+    // Only one scale axis is animated per orientation (matching user preference).
     const keyframes = isVertical
       ? [
-          // Keyframe 0: current squished shape (starting point)
           {
             transform: `scale(1.25) scaleX(${fromSx}) scaleY(${fromSy})`,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
-          // Keyframe 1 @ 30%: biggest bounce + directional lean
           {
-            transform: `scale(1.25) ${skewAxis}(${s1}deg) scaleX(${1 - w1}) scaleY(${1 + w1})`,
-            offset: 0.3,
+            transform: `scale(1.25) ${skewAxis}(${s1}deg) scaleX(${1 - w1})`,
+            offset: 0.25,
             easing: "cubic-bezier(0.4, 0, 0.2, 1)",
           },
-          // Keyframe 2 @ 55%: counter-bounce + opposite lean
           {
-            transform: `scale(1.25) ${skewAxis}(${s2}deg) scaleX(${1 + w2}) scaleY(${1 - w2})`,
-            offset: 0.55,
+            transform: `scale(1.25) ${skewAxis}(${s2}deg) scaleX(${1 + w2})`,
+            offset: 0.46,
             easing: "cubic-bezier(0.4, 0, 0.2, 1)",
           },
-          // Keyframe 3 @ 78%: subtle settle
           {
-            transform: `scale(1.25) ${skewAxis}(${s3}deg) scaleX(${1 - w3}) scaleY(${1 + w3})`,
-            offset: 0.78,
+            transform: `scale(1.25) ${skewAxis}(${s3}deg) scaleX(${1 - w3})`,
+            offset: 0.66,
             easing: "cubic-bezier(0.33, 0, 0, 1)",
           },
-          // Keyframe 4 @ 100%: rest — perfectly round glass thumb
+          {
+            transform: `scale(1.25) ${skewAxis}(${s4}deg) scaleX(${1 + w4})`,
+            offset: 0.84,
+            easing: "cubic-bezier(0.33, 0, 0, 1)",
+          },
           { transform: "scale(1.25)" },
         ]
       : [
@@ -261,26 +268,36 @@ function GlassSliderThumb({
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s1}deg) scaleX(${1 + w1}) scaleY(${1 - w1})`,
-            offset: 0.3,
+            transform: `scale(1.25) ${skewAxis}(${s1}deg) scaleY(${1 - w1})`,
+            offset: 0.25,
             easing: "cubic-bezier(0.4, 0, 0.2, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s2}deg) scaleX(${1 - w2}) scaleY(${1 + w2})`,
-            offset: 0.55,
+            transform: `scale(1.25) ${skewAxis}(${s2}deg) scaleY(${1 + w2})`,
+            offset: 0.46,
             easing: "cubic-bezier(0.4, 0, 0.2, 1)",
           },
           {
-            transform: `scale(1.25) ${skewAxis}(${s3}deg) scaleX(${1 + w3}) scaleY(${1 - w3})`,
-            offset: 0.78,
+            transform: `scale(1.25) ${skewAxis}(${s3}deg) scaleY(${1 - w3})`,
+            offset: 0.66,
+            easing: "cubic-bezier(0.33, 0, 0, 1)",
+          },
+          {
+            transform: `scale(1.25) ${skewAxis}(${s4}deg) scaleY(${1 + w4})`,
+            offset: 0.84,
             easing: "cubic-bezier(0.33, 0, 0, 1)",
           },
           { transform: "scale(1.25)" },
         ]
 
+    // ── Duration scales with intensity ──
+    // Slow drags: ~800ms (quick, light settle)
+    // Fast drags: ~1400ms (more breathing room for the larger bounces)
+    const wobbleDuration = 800 + intensity * 600
+
     pauseAnimRef.current = pill.animate(keyframes, {
-      duration: 800,
-      easing: "linear",
+      duration: wobbleDuration,
+      easing: "ease-out",
     })
 
     // When the animation finishes naturally, lock the pill at scale(1.25)
@@ -423,8 +440,11 @@ function GlassSliderThumb({
       prevPos.current = pos
       prevT.current = ev.timeStamp
 
+      // Exponential smoothing: retain 70% of previous velocity so a
+      // sudden stop doesn't zero-out the stored speed. This makes the
+      // wobble-on-pause trigger reliably even on hard stops.
+      lastVelRef.current = lastVelRef.current * 0.7 + vel * 0.3
       const speed = Math.abs(vel)
-      lastVelRef.current = vel
 
       if (isVertical) {
         const sy = 1 + clamp(speed * 0.25, 0, 0.5)

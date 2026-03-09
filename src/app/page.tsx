@@ -29,6 +29,7 @@ export default function Home() {
           orientation="vertical"
           max={100}
           step={1}
+          className="min-h-96!"
           onValueChange={(value) => console.log({ value })}
           onValueCommit={(finalValue) => console.log({ finalValue })}
         />
