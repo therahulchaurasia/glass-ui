@@ -4,11 +4,24 @@ import * as React from "react"
 import { Slider } from "radix-ui"
 import { cn } from "@/lib/utils"
 
+type ThumbShape = "pill" | "circle"
+
+const PILL_W = 48
+const PILL_H = 28
+const CIRCLE_SIZE = 28
+
 function GlassSlider({
   className,
   style,
+  thumbShape = "pill",
+  thumbWidth,
+  thumbHeight,
   ...props
-}: React.ComponentProps<typeof Slider.Root>) {
+}: React.ComponentProps<typeof Slider.Root> & {
+  thumbShape?: ThumbShape
+  thumbWidth?: number
+  thumbHeight?: number
+}) {
   const thumbCount = (props.value ?? props.defaultValue ?? [0]).length
   const isPointerDownRef = React.useRef(false)
 
@@ -60,6 +73,9 @@ function GlassSlider({
           key={i}
           orientation={props.orientation}
           isPointerDownRef={isPointerDownRef}
+          thumbShape={thumbShape}
+          thumbWidth={thumbWidth}
+          thumbHeight={thumbHeight}
         />
       ))}
     </Slider.Root>
@@ -67,9 +83,6 @@ function GlassSlider({
 }
 
 // ─── Thumb ────────────────────────────────────────────────────────────────────
-// Slightly more compact pill to better match the Apple reference.
-const THUMB_W = 48
-const THUMB_H = 28
 
 function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max)
@@ -103,12 +116,24 @@ function GlassSliderThumb({
   className,
   orientation,
   isPointerDownRef,
+  thumbShape = "pill",
+  thumbWidth,
+  thumbHeight,
   ...props
 }: React.ComponentProps<typeof Slider.Thumb> & {
   orientation?: "horizontal" | "vertical"
   isPointerDownRef?: React.RefObject<boolean>
+  thumbShape?: ThumbShape
+  thumbWidth?: number
+  thumbHeight?: number
 }) {
   const isVertical = orientation === "vertical"
+
+  // Resolve final thumb dimensions based on shape + user overrides
+  const resolvedW =
+    thumbWidth ?? (thumbShape === "circle" ? CIRCLE_SIZE : PILL_W)
+  const resolvedH =
+    thumbHeight ?? (thumbShape === "circle" ? CIRCLE_SIZE : PILL_H)
   const pillRef = React.useRef<HTMLDivElement>(null)
   const filterRef = React.useRef<HTMLDivElement>(null)
   const overlayRef = React.useRef<HTMLDivElement>(null)
@@ -116,6 +141,22 @@ function GlassSliderThumb({
   const animRef = React.useRef<Animation | null>(null)
   const isDragging = React.useRef(false)
   const isHovered = React.useRef(false)
+
+  // ─── Reduced-motion preference ─────────────────────────────────────
+  // Checked once on mount; respects OS-level "reduce motion" setting.
+  // When true, all physics animations (squish, wobble, bounce, hover
+  // scale) are skipped — the thumb still changes glass state but
+  // transforms snap instantly.
+  const prefersReducedMotion = React.useRef(false)
+  React.useEffect(() => {
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)")
+    prefersReducedMotion.current = mql.matches
+    const onChange = (e: MediaQueryListEvent) => {
+      prefersReducedMotion.current = e.matches
+    }
+    mql.addEventListener("change", onChange)
+    return () => mql.removeEventListener("change", onChange)
+  }, [])
 
   const prevPos = React.useRef(0)
   const prevT = React.useRef(0)
@@ -192,6 +233,7 @@ function GlassSliderThumb({
    */
   const runPauseWobble = (pill: HTMLDivElement) => {
     if (!isDragging.current) return
+    if (prefersReducedMotion.current) return
 
     // Snapshot the current squish deformation — this is keyframe 0
     const fromSx = currentSx.current
@@ -321,6 +363,31 @@ function GlassSliderThumb({
   const runRelease = () => {
     clearPauseTimer()
 
+    // ── Reduced-motion fast path ──
+    // Skip all bounce animations; just snap back to idle.
+    if (prefersReducedMotion.current) {
+      if (moveHandlerRef.current) {
+        window.removeEventListener("pointermove", moveHandlerRef.current)
+        moveHandlerRef.current = null
+      }
+      if (upHandlerRef.current) {
+        window.removeEventListener("pointerup", upHandlerRef.current)
+        upHandlerRef.current = null
+      }
+      isDragging.current = false
+      const pill = pillRef.current
+      const filterEl = filterRef.current
+      const overlayEl = overlayRef.current
+      const specularEl = specularRef.current
+      if (!pill || !filterEl || !overlayEl || !specularEl) return
+      setGlassActive(pill, filterEl, overlayEl, specularEl, false)
+      pill.style.transition = ""
+      pill.style.transform = isHovered.current ? "scale(1.22)" : ""
+      currentSx.current = 1
+      currentSy.current = 1
+      return
+    }
+
     // Remove any active window listeners
     if (moveHandlerRef.current) {
       window.removeEventListener("pointermove", moveHandlerRef.current)
@@ -446,25 +513,30 @@ function GlassSliderThumb({
       lastVelRef.current = lastVelRef.current * 0.7 + vel * 0.3
       const speed = Math.abs(vel)
 
-      if (isVertical) {
-        const sy = 1 + clamp(speed * 0.25, 0, 0.5)
-        const sx = 1 - clamp(speed * 0.19, 0, 0.5)
-        currentSx.current = sx
-        currentSy.current = sy
-      } else {
-        const sx = 1 + clamp(speed * 0.21, 0, 0.5)
-        const sy = 1 - clamp(speed * 0.16, 0, 0.5)
-        currentSx.current = sx
-        currentSy.current = sy
+      // Skip squish deformation when reduced motion is preferred
+      if (!prefersReducedMotion.current) {
+        if (isVertical) {
+          const sy = 1 + clamp(speed * 0.25, 0, 0.5)
+          const sx = 1 - clamp(speed * 0.19, 0, 0.5)
+          currentSx.current = sx
+          currentSy.current = sy
+        } else {
+          const sx = 1 + clamp(speed * 0.21, 0, 0.5)
+          const sy = 1 - clamp(speed * 0.16, 0, 0.5)
+          currentSx.current = sx
+          currentSy.current = sy
+        }
+        pill.style.transition = "background 200ms ease, box-shadow 200ms ease"
+        pill.style.transform = `scale(1.25) scaleX(${currentSx.current}) scaleY(${currentSy.current})`
       }
-      pill.style.transition = "background 200ms ease, box-shadow 200ms ease"
-      pill.style.transform = `scale(1.25) scaleX(${currentSx.current}) scaleY(${currentSy.current})`
 
-      // Reset pause detection timer
-      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current)
-      pauseTimerRef.current = setTimeout(() => {
-        runPauseWobble(pill)
-      }, 50)
+      // Reset pause detection timer (skip if reduced motion)
+      if (!prefersReducedMotion.current) {
+        if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current)
+        pauseTimerRef.current = setTimeout(() => {
+          runPauseWobble(pill)
+        }, 50)
+      }
     }
 
     const handleUp = () => {
@@ -482,7 +554,7 @@ function GlassSliderThumb({
     const pill = pillRef.current
     if (!pill || isDragging.current || animRef.current) return
     isHovered.current = true
-    applyHoverScale(pill, 1.22)
+    if (!prefersReducedMotion.current) applyHoverScale(pill, 1.22)
   }
 
   const handlePointerLeave = () => {
@@ -490,7 +562,7 @@ function GlassSliderThumb({
     if (!pill) return
     isHovered.current = false
     if (isDragging.current || animRef.current) return
-    applyHoverScale(pill, 1)
+    if (!prefersReducedMotion.current) applyHoverScale(pill, 1)
   }
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -606,8 +678,8 @@ function GlassSliderThumb({
         className,
       )}
       style={{
-        width: isVertical ? THUMB_H : THUMB_W,
-        height: isVertical ? THUMB_W : THUMB_H,
+        width: isVertical ? resolvedH : resolvedW,
+        height: isVertical ? resolvedW : resolvedH,
         overflow: "visible",
         touchAction: "none",
       }}
@@ -643,8 +715,8 @@ function GlassSliderThumb({
             zIndex: 0,
             borderRadius: "inherit",
             overflow: "hidden",
-            backdropFilter: "blur(0.3px) saturate(180%) brightness(0.9)",
-            WebkitBackdropFilter: "blur(0.3px) saturate(180%) brightness(0.9)",
+            backdropFilter: "blur(1px) saturate(180%) brightness(0.9)",
+            WebkitBackdropFilter: "blur(1px) saturate(180%) brightness(0.9)",
             opacity: 0,
             transition: "opacity 200ms ease",
           }}
@@ -683,4 +755,4 @@ function GlassSliderThumb({
   )
 }
 
-export { GlassSlider, GlassSliderThumb }
+export { GlassSlider, GlassSliderThumb, type ThumbShape }

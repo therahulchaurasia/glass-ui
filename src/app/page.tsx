@@ -2,6 +2,16 @@
 import { Mail, Loader2, Plus, ChevronRight } from "lucide-react"
 import { GlassButton } from "@/components/glass/glass-button"
 import { GlassSlider } from "@/components/glass/glass-slider"
+import {
+  GlassCard,
+  GlassCardHeader,
+  GlassCardTitle,
+  GlassCardDescription,
+  GlassCardContent,
+  GlassCardFooter,
+  GlassCardAction,
+} from "@/components/glass/glass-card"
+import MusicPlayer from "@/components/mock-ui/music-player"
 import { Slider } from "@/components/ui/slider"
 export default function Home() {
   return (
@@ -16,31 +26,7 @@ export default function Home() {
         {/* <GlassButtonShowcase /> */}
         {/* <GlassSliderShowcase /> */}
 
-        <GlassSlider
-          defaultValue={[50]}
-          max={100}
-          step={1}
-          onValueChange={(value) => console.log({ value })}
-          onValueCommit={(finalValue) => console.log({ finalValue })}
-        />
-
-        <GlassSlider
-          defaultValue={[50]}
-          orientation="vertical"
-          max={100}
-          step={1}
-          className="min-h-96!"
-          onValueChange={(value) => console.log({ value })}
-          onValueCommit={(finalValue) => console.log({ finalValue })}
-        />
-
-        <Slider defaultValue={[50]} orientation="vertical" max={100} step={1} />
-        <Slider
-          defaultValue={[50]}
-          orientation="horizontal"
-          max={100}
-          step={1}
-        />
+        <GlassCardShowcase />
       </div>
     </div>
   )
@@ -192,6 +178,27 @@ function GlassSliderShowcase() {
         <div className="flex flex-col gap-6">
           <div className="text-center">
             <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Default Value
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              Uncontrolled, single value
+            </p>
+          </div>
+          <div className="h-12 flex items-center px-4">
+            {/* // Circle thumb (28×28) */}
+            <GlassSlider
+              thumbShape="circle"
+              defaultValue={[50]}
+              thumbHeight={20}
+              thumbWidth={20}
+            />
+            {/* // Pill with custom dimensions */}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
               Range Values
             </span>
             <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
@@ -335,6 +342,158 @@ function GlassSliderShowcase() {
             />
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function GlassCardShowcase() {
+  return (
+    <div className="mx-auto w-full max-w-5xl p-4 md:p-8">
+      <div className="mb-12 text-center">
+        <h2 className="text-2xl font-bold text-white tracking-widest drop-shadow-md">
+          Glass Card
+        </h2>
+        <p className="mt-2 text-sm text-white/60 uppercase tracking-widest">
+          Examples of the Glass Card component and its compositions
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+        {/* --- DEFAULT CARD --- */}
+        <div className="flex flex-col gap-6 items-center">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Default Card
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              Standard layout slots
+            </p>
+          </div>
+
+          <GlassCard className="w-full max-w-sm">
+            <GlassCardHeader>
+              <GlassCardTitle>Project Settings</GlassCardTitle>
+              <GlassCardDescription>
+                Manage your repository configuration and access controls.
+              </GlassCardDescription>
+            </GlassCardHeader>
+            <GlassCardContent>
+              <div className="flex flex-col gap-4 text-sm text-white/70">
+                <div className="flex justify-between border-b border-white/10 pb-2">
+                  <span>Visibility</span>
+                  <span className="text-white">Private</span>
+                </div>
+                <div className="flex justify-between border-b border-white/10 pb-2">
+                  <span>Branch Protection</span>
+                  <span className="text-emerald-400">Enabled</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Deployments</span>
+                  <span className="text-white">Active</span>
+                </div>
+              </div>
+            </GlassCardContent>
+            <GlassCardFooter className="justify-end gap-3 mt-4">
+              <GlassButton variant="ghost" size="sm">
+                Cancel
+              </GlassButton>
+              <GlassButton variant="primary" size="sm">
+                Save
+              </GlassButton>
+            </GlassCardFooter>
+          </GlassCard>
+        </div>
+
+        {/* --- ELASTIC CARD --- */}
+        <div className="flex flex-col gap-6 items-center">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Elastic Card
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              Interactive drag & squish physics
+            </p>
+          </div>
+
+          <GlassCard
+            elastic
+            className="w-full max-w-sm cursor-grab active:cursor-grabbing"
+          >
+            <GlassCardHeader>
+              <GlassCardTitle>Drag Me Around</GlassCardTitle>
+              <GlassCardDescription>
+                Interact with this card to see the custom physics and
+                elasticity.
+              </GlassCardDescription>
+            </GlassCardHeader>
+            <GlassCardContent>
+              <div className="flex h-32 items-center justify-center rounded-xl bg-white/5 border border-white/10">
+                <span className="text-4xl opacity-50">✨</span>
+              </div>
+            </GlassCardContent>
+          </GlassCard>
+        </div>
+
+        {/* --- EVENT CARD --- */}
+        <div className="flex flex-col gap-6 items-center">
+          <div className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              Event Card
+            </span>
+            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+              With edge-to-cover image
+            </p>
+          </div>
+
+          <GlassCard className="w-full max-w-sm overflow-hidden p-0 gap-0">
+            {/* Top Image Area */}
+            <div className="h-48 w-full bg-white/5" />
+
+            {/* Content Area */}
+            <div className="flex flex-col gap-4 p-6">
+              <GlassCardHeader className="p-0">
+                <GlassCardTitle className="text-lg">
+                  Design systems meetup
+                </GlassCardTitle>
+                <GlassCardAction>
+                  <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-white/90">
+                    Featured
+                  </span>
+                </GlassCardAction>
+                <GlassCardDescription className="text-sm text-white/60 leading-relaxed max-w-[240px]">
+                  A practical talk on component APIs, accessibility, and
+                  shipping faster.
+                </GlassCardDescription>
+              </GlassCardHeader>
+
+              <GlassCardFooter className="p-0 mt-2">
+                <GlassButton
+                  elasticOptions={{
+                    resistance: 0.005,
+                  }}
+                  variant="primary"
+                  className="w-full justify-center bg-white/90 text-black hover:bg-white text-sm font-medium"
+                >
+                  View Event
+                </GlassButton>
+              </GlassCardFooter>
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+
+      <div className="mt-16 text-center">
+        <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+          Complex Compositions
+        </span>
+        <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
+          Mock UI built with cards, sliders, and buttons
+        </p>
+      </div>
+
+      <div className="mt-8 flex justify-center w-full">
+        <MusicPlayer />
       </div>
     </div>
   )
