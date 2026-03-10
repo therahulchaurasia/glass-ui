@@ -29,7 +29,7 @@ function GlassCard({
     threshold: 8,
     squish: 0.08,
     squishOnDrag: false,
-    resistance: 0.05,
+    elasticity: 0.05,
     ...elasticOptions,
   })
 
@@ -51,8 +51,10 @@ function GlassCard({
       data-slot='glass-card'
       className={cn(
         'flex flex-col gap-6 rounded-2xl border border-white/15 py-6 text-white/90',
-        elastic && 'touch-pan-y select-none',
-        elastic && !prefersReducedMotion && 'cursor-grab active:cursor-grabbing',
+        elastic && 'touch-pan-y',
+        elastic &&
+          !prefersReducedMotion &&
+          'cursor-grab active:cursor-grabbing',
         className,
       )}
       style={{

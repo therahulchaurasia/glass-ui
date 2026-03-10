@@ -1,9 +1,9 @@
-import { useRef } from "react"
-import usePrefersReducedMotion from "./use-prefers-reduced-motion"
+import { useRef } from 'react'
+import usePrefersReducedMotion from './use-prefers-reduced-motion'
 
 export interface ElasticDragOptions {
   /** How far the element follows your pointer (0 = fixed, 1 = tracks exactly). Default 0.03 */
-  resistance?: number
+  elasticity?: number
   /** Maximum jelly deformation during drag (0 = rigid, 1 = extreme). Default 0.18 */
   squish?: number
   /** Spring bounce intensity past rest position (0 = no overshoot, 1 = dramatic). Default 0.35 */
@@ -17,7 +17,7 @@ export interface ElasticDragOptions {
 }
 
 export function useElasticDrag({
-  resistance = 0.03,
+  elasticity = 0.03,
   squish = 0.18,
   overshoot = 0.35,
   duration = 850,
@@ -41,9 +41,16 @@ export function useElasticDrag({
     // Skip pointer capture for interactive elements so their native
     // click/submit behaviour isn't swallowed.
     const target = e.target as HTMLElement
+
+    // If it's a slider, completely kill the card drag.
+    if (target.closest('[data-no-drag]')) {
+      return
+    }
+
     const isInteractive = target.closest(
-      "button, a, input, select, textarea, label",
+      'button, a, input, select, textarea, label',
     )
+    // If it's a button, let the card drag, but don't swallow the click event.
     if (!isInteractive) {
       el.setPointerCapture(e.pointerId)
     }
@@ -66,8 +73,8 @@ export function useElasticDrag({
         activated = true
       }
 
-      lastDx = rawDx * resistance
-      lastDy = rawDy * resistance
+      lastDx = rawDx * elasticity
+      lastDy = rawDy * elasticity
 
       if (squishOnDrag) {
         const distance = Math.sqrt(lastDx * lastDx + lastDy * lastDy)
@@ -81,42 +88,42 @@ export function useElasticDrag({
         lastSy = 1 + sinA * squishAmount - cosA * squishAmount * 0.4
       }
 
-      el.style.transition = "none"
+      el.style.transition = 'none'
       el.style.transform = `translate(${lastDx}px, ${lastDy}px) scaleX(${lastSx}) scaleY(${lastSy})`
     }
 
     const handlePointerUp = (e: Event) => {
-      window.removeEventListener("pointermove", handlePointerMove)
-      window.removeEventListener("pointerup", handlePointerUp)
-      window.removeEventListener("pointercancel", handlePointerUp)
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
 
       if (!activated) {
-        el.style.transform = ""
-        el.style.transition = ""
+        el.style.transform = ''
+        el.style.transition = ''
         return
       }
 
-      el.style.transform = "translate(0px,0px) scaleX(1) scaleY(1)"
+      el.style.transform = 'translate(0px,0px) scaleX(1) scaleY(1)'
 
-      if (e.type === "pointercancel") {
+      if (e.type === 'pointercancel') {
         animationRef.current = el.animate(
           [
             {
               transform: `translate(${lastDx}px,${lastDy}px) scaleX(${lastSx}) scaleY(${lastSy})`,
             },
             {
-              transform: "translate(0px,0px) scaleX(1) scaleY(1)",
+              transform: 'translate(0px,0px) scaleX(1) scaleY(1)',
             },
           ],
           {
             duration: 150,
-            easing: "ease-out",
+            easing: 'ease-out',
           },
         )
 
         animationRef.current.onfinish = () => {
-          el.style.transform = ""
-          el.style.transition = ""
+          el.style.transform = ''
+          el.style.transition = ''
           animationRef.current = null
         }
         return
@@ -133,43 +140,43 @@ export function useElasticDrag({
         [
           {
             transform: `translate(${lastDx}px,${lastDy}px) scaleX(${lastSx}) scaleY(${lastSy})`,
-            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
           },
           {
             transform: `translate(${ox}px,${oy}px) scaleX(${1 + b1}) scaleY(${1 - b1})`,
             offset: 0.25,
-            easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
           },
           {
             transform: `translate(${ox * -overshoot}px,${oy * -overshoot}px) scaleX(${1 - b2}) scaleY(${1 + b2})`,
             offset: 0.5,
-            easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
           },
           {
             transform: `translate(${ox * overshoot * 0.5}px,${oy * overshoot * 0.5}px) scaleX(${1 + b3}) scaleY(${1 - b3})`,
             offset: 0.72,
-            easing: "cubic-bezier(0.33, 0, 0, 1)",
+            easing: 'cubic-bezier(0.33, 0, 0, 1)',
           },
           {
-            transform: "translate(0px,0px) scaleX(1) scaleY(1)",
+            transform: 'translate(0px,0px) scaleX(1) scaleY(1)',
           },
         ],
         {
           duration,
-          easing: "linear",
+          easing: 'linear',
         },
       )
 
       animationRef.current.onfinish = () => {
-        el.style.transform = ""
-        el.style.transition = ""
+        el.style.transform = ''
+        el.style.transition = ''
         animationRef.current = null
       }
     }
 
-    window.addEventListener("pointermove", handlePointerMove)
-    window.addEventListener("pointerup", handlePointerUp)
-    window.addEventListener("pointercancel", handlePointerUp)
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
   }
 
   return { ref, onPointerDown: handlePointerDown }

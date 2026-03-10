@@ -355,14 +355,11 @@ function GlassCardShowcase() {
         <h2 className='text-2xl font-bold text-white tracking-widest drop-shadow-md'>
           Glass Card
         </h2>
-        <p className='mt-2 text-sm text-white/60 uppercase tracking-widest'>
-          Examples of the Glass Card component and its compositions
-        </p>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-12 items-start'>
         {/* --- DEFAULT CARD --- */}
-        <div className='flex flex-col gap-6 items-center'>
+        {/* <div className='flex flex-col gap-6 items-center'>
           <div className='text-center'>
             <span className='text-xs font-semibold uppercase tracking-widest text-white/70'>
               Default Card
@@ -404,10 +401,10 @@ function GlassCardShowcase() {
               </GlassButton>
             </GlassCardFooter>
           </GlassCard>
-        </div>
+        </div> */}
 
         {/* --- ELASTIC CARD --- */}
-        <div className='flex flex-col gap-6 items-center'>
+        {/* <div className='flex flex-col gap-6 items-center'>
           <div className='text-center'>
             <span className='text-xs font-semibold uppercase tracking-widest text-white/70'>
               Elastic Card
@@ -434,18 +431,18 @@ function GlassCardShowcase() {
               </div>
             </GlassCardContent>
           </GlassCard>
-        </div>
+        </div> */}
 
         {/* --- EVENT CARD --- */}
         <div className='flex flex-col gap-6 items-center'>
-          <div className='text-center'>
+          {/* <div className='text-center'>
             <span className='text-xs font-semibold uppercase tracking-widest text-white/70'>
               Event Card
             </span>
             <p className='text-[10px] text-white/40 mt-1 uppercase tracking-wider'>
               With edge-to-cover image
             </p>
-          </div>
+          </div> */}
 
           <GlassCard
             className='w-full max-w-sm overflow-hidden p-0 gap-0'
