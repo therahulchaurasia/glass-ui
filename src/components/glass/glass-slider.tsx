@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Slider } from "radix-ui"
 import { cn } from "@/lib/utils"
+import usePrefersReducedMotion from "@/hooks/use-prefers-reduced-motion"
 
 type ThumbShape = "pill" | "circle"
 
@@ -210,16 +211,7 @@ function GlassSliderThumb({
   // When true, all physics animations (squish, wobble, bounce, hover
   // scale) are skipped — the thumb still changes glass state but
   // transforms snap instantly.
-  const prefersReducedMotion = React.useRef(false)
-  React.useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)")
-    prefersReducedMotion.current = mql.matches
-    const onChange = (e: MediaQueryListEvent) => {
-      prefersReducedMotion.current = e.matches
-    }
-    mql.addEventListener("change", onChange)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
+  const prefersReducedMotion = usePrefersReducedMotion()
 
   const prevPos = React.useRef(0)
   const prevT = React.useRef(0)
@@ -296,7 +288,7 @@ function GlassSliderThumb({
    */
   const runPauseWobble = (pill: HTMLDivElement) => {
     if (!isDragging.current) return
-    if (prefersReducedMotion.current) return
+    if (prefersReducedMotion) return
 
     // Snapshot the current squish deformation — this is keyframe 0
     const fromSx = currentSx.current
@@ -426,7 +418,7 @@ function GlassSliderThumb({
 
     // ── Reduced-motion fast path ──
     // Skip all bounce animations; just snap back to idle.
-    if (prefersReducedMotion.current) {
+    if (prefersReducedMotion) {
       if (moveHandlerRef.current) {
         window.removeEventListener("pointermove", moveHandlerRef.current)
         moveHandlerRef.current = null
@@ -576,7 +568,7 @@ function GlassSliderThumb({
       const speed = Math.abs(vel)
 
       // Skip squish deformation when reduced motion is preferred
-      if (!prefersReducedMotion.current) {
+      if (!prefersReducedMotion) {
         if (isVertical) {
           const sy = 1 + clamp(speed * squishStretchFactor, 0, squishMax)
           const sx = 1 - clamp(speed * squishCompressFactor, 0, squishMax)
@@ -593,7 +585,7 @@ function GlassSliderThumb({
       }
 
       // Reset pause detection timer (skip if reduced motion)
-      if (!prefersReducedMotion.current) {
+      if (!prefersReducedMotion) {
         if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current)
         pauseTimerRef.current = setTimeout(() => {
           runPauseWobble(pill)
@@ -616,7 +608,7 @@ function GlassSliderThumb({
     const pill = pillRef.current
     if (!pill || isDragging.current || animRef.current) return
     isHovered.current = true
-    if (!prefersReducedMotion.current) applyHoverScale(pill, hoverScale)
+    if (!prefersReducedMotion) applyHoverScale(pill, hoverScale)
   }
 
   const handlePointerLeave = () => {
@@ -624,7 +616,7 @@ function GlassSliderThumb({
     if (!pill) return
     isHovered.current = false
     if (isDragging.current || animRef.current) return
-    if (!prefersReducedMotion.current) applyHoverScale(pill, 1)
+    if (!prefersReducedMotion) applyHoverScale(pill, 1)
   }
 
   const handlePointerDown = (e: React.PointerEvent) => {

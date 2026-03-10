@@ -1,4 +1,5 @@
 import { useRef } from "react"
+import usePrefersReducedMotion from "./use-prefers-reduced-motion"
 
 export interface ElasticDragOptions {
   /** How far the element follows your pointer (0 = fixed, 1 = tracks exactly). Default 0.03 */
@@ -26,12 +27,11 @@ export function useElasticDrag({
   const ref = useRef<HTMLElement>(null)
   const animationRef = useRef<Animation | null>(null)
 
-  const prefersReducedMotion = () =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  const prefersReducedMotion = usePrefersReducedMotion()
 
   const handlePointerDown = (e: React.PointerEvent) => {
     const el = ref.current
-    if (!el || prefersReducedMotion()) return
+    if (!el || prefersReducedMotion) return
 
     if (animationRef.current) {
       animationRef.current.cancel()
@@ -85,9 +85,10 @@ export function useElasticDrag({
       el.style.transform = `translate(${lastDx}px, ${lastDy}px) scaleX(${lastSx}) scaleY(${lastSy})`
     }
 
-    const handlePointerUp = () => {
+    const handlePointerUp = (e: Event) => {
       window.removeEventListener("pointermove", handlePointerMove)
       window.removeEventListener("pointerup", handlePointerUp)
+      window.removeEventListener("pointercancel", handlePointerUp)
 
       if (!activated) {
         el.style.transform = ""
@@ -96,6 +97,30 @@ export function useElasticDrag({
       }
 
       el.style.transform = "translate(0px,0px) scaleX(1) scaleY(1)"
+
+      if (e.type === "pointercancel") {
+        animationRef.current = el.animate(
+          [
+            {
+              transform: `translate(${lastDx}px,${lastDy}px) scaleX(${lastSx}) scaleY(${lastSy})`,
+            },
+            {
+              transform: "translate(0px,0px) scaleX(1) scaleY(1)",
+            },
+          ],
+          {
+            duration: 150,
+            easing: "ease-out",
+          },
+        )
+
+        animationRef.current.onfinish = () => {
+          el.style.transform = ""
+          el.style.transition = ""
+          animationRef.current = null
+        }
+        return
+      }
 
       const ox = lastDx * -overshoot
       const oy = lastDy * -overshoot
@@ -144,6 +169,7 @@ export function useElasticDrag({
 
     window.addEventListener("pointermove", handlePointerMove)
     window.addEventListener("pointerup", handlePointerUp)
+    window.addEventListener("pointercancel", handlePointerUp)
   }
 
   return { ref, onPointerDown: handlePointerDown }
