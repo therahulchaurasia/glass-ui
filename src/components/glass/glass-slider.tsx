@@ -79,7 +79,7 @@ function GlassSlider({
   return (
     <Slider.Root
       data-slot="glass-slider"
-      data-no-drag
+      data-no-parent-drag
       className={cn(
         "relative flex w-full touch-none select-none items-center data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col data-disabled:opacity-50",
         className,

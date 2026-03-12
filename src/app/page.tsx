@@ -1,18 +1,16 @@
 'use client'
-import { Mail, Loader2, Plus, ChevronRight } from 'lucide-react'
 import { GlassButton } from '@/components/glass/glass-button'
-import { GlassSlider } from '@/components/glass/glass-slider'
 import {
 	GlassCard,
+	GlassCardAction,
+	GlassCardDescription,
+	GlassCardFooter,
 	GlassCardHeader,
 	GlassCardTitle,
-	GlassCardDescription,
-	GlassCardContent,
-	GlassCardFooter,
-	GlassCardAction,
 } from '@/components/glass/glass-card'
+import { GlassSlider } from '@/components/glass/glass-slider'
 import MusicPlayer from '@/components/mock-ui/music-player'
-import { Slider } from '@/components/ui/slider'
+import { ChevronRight, Loader2, Mail, Plus } from 'lucide-react'
 export default function Home() {
 	return (
 		<div className='relative min-h-screen bg-[#0a0e1a] font-sans antialiased overflow-x-hidden'>
@@ -23,7 +21,7 @@ export default function Home() {
 				<div className='absolute bottom-[100px] right-[20%] h-[300px] w-[300px] rounded-full bg-[radial-gradient(circle,#2f9e44,#2b8a3e)] opacity-55 blur-[80px]' />
 			</div>
 			<div className='flex flex-col gap-12 pt-24 max-w-6xl mx-auto'>
-				{/* <GlassButtonShowcase /> */}
+				<GlassButtonShowcase />
 
 				<GlassSliderShowcase />
 
@@ -280,36 +278,13 @@ function GlassSliderShowcase() {
 					</div>
 				</div>
 
-				<div className='flex flex-col gap-6'>
-					<div className='text-center'>
-						<span className='text-xs font-semibold uppercase tracking-widest text-white/70'>
-							High Minimum Value
-						</span>
-						<p className='text-[10px] text-white/40 mt-1 uppercase tracking-wider'>
-							min=50, max=100
-						</p>
-					</div>
-					<div className='h-12 flex items-center px-4'>
-						<GlassSlider
-							defaultValue={[75]}
-							min={50}
-							max={100}
-							step={1}
-							onValueChange={(value) => console.log({ value })}
-							onValueCommit={(finalValue) => console.log({ finalValue })}
-						/>
-					</div>
-				</div>
-
 				{/* --- VERTICAL VARIANTS --- */}
 				<div className='flex flex-col gap-6'>
 					<div className='text-center'>
 						<span className='text-xs font-semibold uppercase tracking-widest text-white/70'>
 							Vertical Default
 						</span>
-						<p className='text-[10px] text-white/40 mt-1 uppercase tracking-wider'>
-							orientation="vertical"
-						</p>
+						<p className='text-[10px] text-white/40 mt-1 uppercase tracking-wider'></p>
 					</div>
 					<div className='h-64 flex items-center justify-center'>
 						<GlassSlider
